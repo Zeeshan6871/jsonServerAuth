@@ -25,7 +25,7 @@ const Login = () => {
         setPasswordError('');
 
         if (validate()) {
-            fetch("http://localhost:8000/user/" + username).then((res) => {
+            fetch("https://jsonserverauth.onrender.com/user/" + username).then((res) => {
                 return res.json();
             }).then((resp) => {
                 if (Object.keys(resp).length === 0) {

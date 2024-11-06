@@ -59,7 +59,7 @@ const Register = () => {
         setValidated(true);
 
         if (IsValidate()) {
-            fetch("http://localhost:8000/user", {
+            fetch("https://jsonserverauth.onrender.com/user", {
                 method: "POST",
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify(regobj)
