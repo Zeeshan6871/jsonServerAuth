@@ -1,226 +1,261 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { registerUser } from '../services/auth.api.services';
 
 const Register = () => {
-    const [id, idchange] = useState("");
-    const [name, namechange] = useState("");
-    const [password, passwordchange] = useState("");
-    const [email, emailchange] = useState("");
-    const [phone, phonechange] = useState("");
-    const [country, countrychange] = useState("india");
-    const [address, addresschange] = useState("");
-    const [gender, genderchange] = useState("male");
-    
-    const [validated, setValidated] = useState(false); 
+    const [formData, setFormData] = useState({
+        id: "",
+        name: "",
+        password: "",
+        confirmPassword: "",
+        email: "",
+        country: "india",
+        address: "",
+        gender: "male",
+    });
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [validated, setValidated] = useState(false);
+    const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        let username = sessionStorage.getItem('username');
+        let username = sessionStorage.getItem("username");
         if (username) {
             navigate("/");
         }
     }, [navigate]);
 
-    const IsValidate = () => {
-        let isproceed = true;
-        let errormessage = 'Please enter the value in ';
-        
-        if (id === "" || id === null) {
-            isproceed = false;
-        }
-        if (name === "" || name === null) {
-            isproceed = false;
-        }
-        if (password === "" || password === null) {
-            isproceed = false;
-        }
-        if (email === "" || email === null) {
-            isproceed = false;
-        }
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prevData) => ({ ...prevData, [name]: value }));
+    };
 
-        if (!isproceed) {
-            toast.warning(errormessage);
-        } else {
-            // Validate Email format
-            if (!/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/.test(email)) {
-                isproceed = false;
-                toast.warning('Please enter a valid email');
+    const validateForm = () => {
+        const newErrors = {};
+        let isValid = true;
+
+        // Check for required fields
+        Object.keys(formData).forEach((field) => {
+            if (formData[field] === "" || formData[field] === null) {
+                isValid = false;
+                newErrors[field] = `${field.charAt(0).toUpperCase() + field.slice(1)} is required.`;
             }
-        }
-        return isproceed;
-    }
+        });
 
-    const handlesubmit = (e) => {
+        // Validate email format
+        if (formData.email && !/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/.test(formData.email)) {
+            isValid = false;
+            newErrors.email = "Please enter a valid email.";
+        }
+
+        // Check if passwords match
+        if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+            isValid = false;
+            newErrors.confirmPassword = "Passwords do not match.";
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
+    const handleSubmit = (e) => {
         e.preventDefault();
-        let regobj = { id, name, password, email, phone, country, address, gender };
-        
-        // Set validated to true when form is submitted to trigger validation
         setValidated(true);
-
-        if (IsValidate()) {
-            fetch("https://jsonserverauth.onrender.com/user", {
-                method: "POST",
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify(regobj)
-            }).then((res) => {
-                toast.success('Registered successfully.');
-                navigate('/login');
-            }).catch((err) => {
-                toast.error('Failed :' + err.message);
-            });
+    
+        console.log(formData);
+        console.log(errors);
+        
+        if (validateForm()) {
+            const regobj = { ...formData };
+    
+            setLoading(true);
+    
+            registerUser(regobj)
+                .then((data) => {
+                    toast.success("Registered successfully.");
+                    navigate("/login");
+                })
+                .catch((err) => {
+                    toast.error("Failed: " + err.message);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         }
-    }
+    };
+    const togglePasswordVisibility = () => {
+        setShowPassword((prev) => !prev);
+    };
 
     return (
-        <div>
-            <div className="offset-lg-3 col-lg-6 mt-5">
-                <form className="container needs-validation" onSubmit={handlesubmit} noValidate>
-                    <div className="card">
-                        <div className="card-header">
-                            <h1>User Registration</h1>
-                        </div>
-                        <div className="card-body">
-                            <div className="row">
-                                {/* Username */}
-                                <div className="col-lg-6">
-                                    <div className="form-group">
-                                        <label>User Name <span className="errmsg">*</span></label>
+        <div className="container mt-5">
+            <div className="row justify-content-center">
+                <div className="col-md-8">
+                    <form onSubmit={handleSubmit} noValidate>
+                        <div className="card">
+                            <div className="card-header text-center">
+                                <h2>User Registration</h2>
+                            </div>
+                            <div className="card-body">
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">User Name</label>
                                         <input
-                                            value={id}
-                                            onChange={e => idchange(e.target.value)}
-                                            className={`form-control ${validated && !id ? 'is-invalid' : ''}`}
+                                            type="text"
+                                            name="id"
+                                            value={formData.id}
+                                            onChange={handleInputChange}
+                                            className={`form-control ${validated && errors.id ? "is-invalid" : ""}`}
                                             required
                                         />
-                                        <div className="invalid-feedback">Username is required.</div>
+                                        {validated && errors.id && <div className="invalid-feedback">{errors.id}</div>}
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Full Name</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            className={`form-control ${validated && errors.name ? "is-invalid" : ""}`}
+                                            required
+                                        />
+                                        {validated && errors.name && <div className="invalid-feedback">{errors.name}</div>}
                                     </div>
                                 </div>
 
-                                {/* Password */}
-                                <div className="col-lg-6">
-                                    <div className="form-group">
-                                        <label>Password <span className="errmsg">*</span></label>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Password</label>
+                                        <div className="input-group">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                name="password"
+                                                value={formData.password}
+                                                onChange={handleInputChange}
+                                                className={`form-control ${validated && errors.password ? "is-invalid" : ""}`}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                className="input-group-text"
+                                                onClick={togglePasswordVisibility}
+                                            >
+                                                {showPassword ? "🫣" : "👁️"}
+                                            </button>
+                                        </div>
+                                        {validated && errors.password && <div className="invalid-feedback">{errors.password}</div>}
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Confirm Password</label>
                                         <input
-                                            value={password}
-                                            onChange={e => passwordchange(e.target.value)}
-                                            type="password"
-                                            className={`form-control ${validated && !password ? 'is-invalid' : ''}`}
+                                            type={showPassword ? "text" : "password"}
+                                            name="confirmPassword"
+                                            value={formData.confirmPassword}
+                                            onChange={handleInputChange}
+                                            className={`form-control ${validated && errors.confirmPassword ? "is-invalid" : ""}`}
                                             required
                                         />
-                                        <div className="invalid-feedback">Password is required.</div>
+                                        {validated && errors.confirmPassword && (
+                                            <div className="invalid-feedback">{errors.confirmPassword}</div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Full Name */}
-                                <div className="col-lg-6">
-                                    <div className="form-group">
-                                        <label>Full Name <span className="errmsg">*</span></label>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Email</label>
                                         <input
-                                            value={name}
-                                            onChange={e => namechange(e.target.value)}
-                                            className={`form-control ${validated && !name ? 'is-invalid' : ''}`}
-                                            required
-                                        />
-                                        <div className="invalid-feedback">Full name is required.</div>
-                                    </div>
-                                </div>
-
-                                {/* Email */}
-                                <div className="col-lg-6">
-                                    <div className="form-group">
-                                        <label>Email <span className="errmsg">*</span></label>
-                                        <input
-                                            value={email}
-                                            onChange={e => emailchange(e.target.value)}
-                                            className={`form-control ${validated && !email ? 'is-invalid' : ''}`}
-                                            required
                                             type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            className={`form-control ${validated && errors.email ? "is-invalid" : ""}`}
+                                            required
                                         />
-                                        <div className="invalid-feedback">Please enter a valid email.</div>
+                                        {validated && errors.email && <div className="invalid-feedback">{errors.email}</div>}
                                     </div>
-                                </div>
 
-                                {/* Phone */}
-                                <div className="col-lg-6">
-                                    <div className="form-group">
-                                        <label>Phone</label>
-                                        <input
-                                            value={phone}
-                                            onChange={e => phonechange(e.target.value)}
-                                            className="form-control"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Country */}
-                                <div className="col-lg-6">
-                                    <div className="form-group">
-                                        <label>Country <span className="errmsg">*</span></label>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Country</label>
                                         <select
-                                            value={country}
-                                            onChange={e => countrychange(e.target.value)}
-                                            className="form-control"
+                                            name="country"
+                                            value={formData.country}
+                                            onChange={handleInputChange}
+                                            className="form-select"
                                             required
                                         >
                                             <option value="india">India</option>
                                             <option value="usa">USA</option>
                                             <option value="singapore">Singapore</option>
                                         </select>
-                                        <div className="invalid-feedback">Country selection is required.</div>
+                                        {validated && errors.country && <div className="invalid-feedback">{errors.country}</div>}
                                     </div>
                                 </div>
 
-                                {/* Address */}
-                                <div className="col-lg-12">
-                                    <div className="form-group">
-                                        <label>Address</label>
-                                        <textarea
-                                            value={address}
-                                            onChange={e => addresschange(e.target.value)}
-                                            className="form-control"
-                                        />
-                                    </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Address</label>
+                                    <textarea
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleInputChange}
+                                        className={`form-control ${validated && errors.address ? "is-invalid" : ""}`}
+                                        required
+                                    />
+                                    {validated && errors.address && <div className="invalid-feedback">{errors.address}</div>}
                                 </div>
 
-                                {/* Gender */}
-                                <div className="col-lg-6">
-                                    <div className="form-group">
-                                        <label>Gender</label>
-                                        <br />
-                                        <input
-                                            type="radio"
-                                            checked={gender === 'male'}
-                                            onChange={e => genderchange(e.target.value)}
-                                            name="gender"
-                                            value="male"
-                                            className="app-check"
-                                        />
-                                        <label>Male</label>
-                                        <input
-                                            type="radio"
-                                            checked={gender === 'female'}
-                                            onChange={e => genderchange(e.target.value)}
-                                            name="gender"
-                                            value="female"
-                                            className="app-check"
-                                        />
-                                        <label>Female</label>
+                                <div className="mb-3">
+                                    <label className="form-label">Gender</label>
+                                    <div>
+                                        <div className="form-check form-check-inline">
+                                            <input
+                                                type="radio"
+                                                name="gender"
+                                                value="male"
+                                                checked={formData.gender === "male"}
+                                                onChange={handleInputChange}
+                                                className="form-check-input"
+                                            />
+                                            <label className="form-check-label">Male</label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
+                                            <input
+                                                type="radio"
+                                                name="gender"
+                                                value="female"
+                                                checked={formData.gender === "female"}
+                                                onChange={handleInputChange}
+                                                className="form-check-input"
+                                            />
+                                            <label className="form-check-label">Female</label>
+                                        </div>
+                                        {validated && errors.gender && <div className="invalid-feedback">{errors.gender}</div>}
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="card-footer">
-                            <button type="submit" className="btn btn-primary">Register</button>
+                            <div className="card-footer text-center">
+                                <button type="submit" className="btn btn-primary">
+                                    {loading ? <div className="spinner-border" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div> : "Register"}
+                               </button>
+                                <Link to="/login" className="btn btn-outline-dark ms-2">
+                                    Already have an account?
+                                </Link>
+                            </div>
                         </div>
-                        <Link to={'/login'} className="btn btn-sm btn-outline-info">
-                            Already have an account?
-                        </Link>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     );
-}
+};
 
 export default Register;

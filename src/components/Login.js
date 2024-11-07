@@ -1,112 +1,148 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { loginUser } from '../services/auth.api.services';
 
 const Login = () => {
-    const [username, usernameupdate] = useState('');
-    const [password, passwordupdate] = useState('');
-    const [usernameError, setUsernameError] = useState('');
-    const [passwordError, setPasswordError] = useState('');
+  const [formData, setFormData] = useState({username: "",password: ""});
+  const [errors, setErrors] = useState({username: "",password: "",});
+  const [showPassword, setShowPassword] = useState(false);
+  const [validated, setValidated] = useState(false);
 
-    const usenavigate = useNavigate();
+  const usenavigate = useNavigate();
 
-    useEffect(() => {
-        let username = sessionStorage.getItem('username');
-        if (username) {
-            usenavigate("/");
-        }
-    }, [usenavigate]);
+  useEffect(() => {
+    let username = sessionStorage.getItem("username");
+    if (username) {
+      usenavigate("/");
+    }
+  }, [usenavigate]);
 
-    const SubmitLogin = (e) => {
-        e.preventDefault();
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-        // Reset error messages before validation
-        setUsernameError('');
-        setPasswordError('');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setValidated(true); // Trigger validation when form is submitted
+  
+    setErrors({ username: "", password: "" });
+  
+    if (validate()) {
+      const { username, password } = formData;
+  
+      loginUser(username, password)
+        .then((resp) => {
+          toast.success(resp.message); // success message from API
+          sessionStorage.setItem("username", username);
+          usenavigate("/"); // Redirect after successful login
+        })
+        .catch((err) => {
+          toast.error("Login Failed: " + err.message); // Error message from API
+        });
+    }
+  };
 
-        if (validate()) {
-            fetch("https://jsonserverauth.onrender.com/user/" + username).then((res) => {
-                return res.json();
-            }).then((resp) => {
-                if (Object.keys(resp).length === 0) {
-                    toast.error('Please Enter a valid username');
-                } else {
-                    if (resp.password === password) {
-                        toast.success('Login Successful');
-                        sessionStorage.setItem('username', username);
-                        usenavigate('/');
-                    } else {
-                        toast.error('Invalid credentials');
-                    }
-                }
-            }).catch((err) => {
-                toast.error('Login Failed due to: ' + err.message);
-            });
-        }
-    };
+  const validate = () => {
+    let isValid = true;
+    let newErrors = {};
 
-    const validate = () => {
-        let isValid = true;
+    // Username validation
+    if (!formData.username) {
+      newErrors.username = "Please enter a username.";
+      isValid = false;
+    }
 
-        // Validate username
-        if (username === '') {
-            setUsernameError('Please enter a username');
-            isValid = false;
-        }
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Please enter a password.";
+      isValid = false;
+    }
 
-        // Validate password
-        if (password === '') {
-            setPasswordError('Please enter a password');
-            isValid = false;
-        }
+    setErrors(newErrors);
+    return isValid;
+  };
 
-        return isValid;
-    };
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
-    return (
-        <div className="row">
-            <div className="offset-lg-3 col-lg-6" style={{ marginTop: '100px' }}>
-                <form onSubmit={SubmitLogin} className="container">
-                    <div className="card">
-                        <div className="card-header">
-                            <h2>User Login</h2>
-                        </div>
-                        <div className="card-body">
-                            <div className="form-group">
-                                <label>User Name <span className="errmsg">*</span></label>
-                                <input
-                                    type="text"
-                                    value={username}
-                                    onChange={e => usernameupdate(e.target.value)}
-                                    className={`form-control ${usernameError ? 'is-invalid' : ''}`}
-                                />
-                                {usernameError && (
-                                    <div className="invalid-feedback">{usernameError}</div>
-                                )}
-                            </div>
-                            <div className="form-group">
-                                <label>Password <span className="errmsg">*</span></label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={e => passwordupdate(e.target.value)}
-                                    className={`form-control ${passwordError ? 'is-invalid' : ''}`}
-                                />
-                                {passwordError && (
-                                    <div className="invalid-feedback">{passwordError}</div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="card-footer">
-                            <button type="submit" className="btn btn-primary me-2">Login</button>
-                            <div className="vr h-100"></div>
-                            <Link className="btn btn-outline-dark ms-2" to={'/register'}>Register</Link>
-                        </div>
-                    </div>
-                </form>
+  return (
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-8 col-lg-6">
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="card">
+              <div className="card-header text-center">
+                <h2>User Login</h2>
+              </div>
+              <div className="card-body">
+                {/* Username Field */}
+                <div className="form-group mb-3">
+                  <label htmlFor="username" className="form-label">
+                    Username <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className={`form-control ${validated && errors.username ? "is-invalid" : ""}`}
+                    required
+                  />
+                  {validated && errors.username && (
+                    <div className="invalid-feedback">{errors.username}</div>
+                  )}
+                </div>
+
+                {/* Password Field */}
+                <div className="form-group mb-3">
+                  <label htmlFor="password" className="form-label">
+                    Password <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`form-control ${validated && errors.password ? "is-invalid" : ""}`}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="input-group-text"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? "🫣" : "👁️"}
+                    </button>
+                  </div>
+                  {validated && errors.password && (
+                    <div className="invalid-feedback">{errors.password}</div>
+                  )}
+                </div>
+              </div>
+              <div className="card-footer text-center">
+                <button type="submit" className="btn btn-primary me-2">
+                  Login
+                </button>
+                <div className="vr h-100"></div>
+                <Link className="btn btn-outline-dark ms-2" to="/register">
+                  Register
+                </Link>
+              </div>
             </div>
+          </form>
         </div>
-    );
-}
+      </div>
+    </div>
+  );
+};
 
 export default Login;
