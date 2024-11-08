@@ -72,76 +72,83 @@ const Login = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-8 col-lg-6">
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="card">
-              <div className="card-header text-center">
-                <h2>User Login</h2>
+    <div className="container-fluid vh-100 d-flex align-items-center justify-content-center">
+    <div className="row w-100">
+      <div className="col-md-8 col-lg-6 mx-auto">
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="card">
+            <div className="card-header text-center">
+              <h2>User Login</h2>
+            </div>
+            <div className="card-body">
+              {/* Username Field */}
+              <div className="form-group mb-3">
+                <label htmlFor="username" className="form-label">
+                  Username <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  placeholder="Username"
+                  className={`form-control ${validated && errors.username ? "is-invalid" : ""}`}
+                  required
+                />
+                {validated && errors.username && (
+                  <div className="invalid-feedback">{errors.username}</div>
+                )}
               </div>
-              <div className="card-body">
-                {/* Username Field */}
-                <div className="form-group mb-3">
-                  <label htmlFor="username" className="form-label">
-                    Username <span className="text-danger">*</span>
-                  </label>
+  
+              {/* Password Field */}
+              <div className="form-group mb-3">
+                <label htmlFor="password" className="form-label">
+                  Password <span className="text-danger">*</span>
+                </label>
+                <div className="input-group">
                   <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    value={formData.username}
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
                     onChange={handleChange}
-                    className={`form-control ${validated && errors.username ? "is-invalid" : ""}`}
+                    placeholder="Password"
+                    className={`form-control ${validated && errors.password ? "is-invalid" : ""}`}
                     required
                   />
-                  {validated && errors.username && (
-                    <div className="invalid-feedback">{errors.username}</div>
-                  )}
+                  <button
+                    type="button"
+                    className="input-group-text"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? "🔓" : "🔒"}
+                  </button>
                 </div>
-
-                {/* Password Field */}
-                <div className="form-group mb-3">
-                  <label htmlFor="password" className="form-label">
-                    Password <span className="text-danger">*</span>
-                  </label>
-                  <div className="input-group">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`form-control ${validated && errors.password ? "is-invalid" : ""}`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="input-group-text"
-                      onClick={togglePasswordVisibility}
-                    >
-                      {showPassword ? "🫣" : "👁️"}
-                    </button>
-                  </div>
-                  {validated && errors.password && (
-                    <div className="invalid-feedback">{errors.password}</div>
-                  )}
-                </div>
-              </div>
-              <div className="card-footer text-center">
-                <button type="submit" className="btn btn-primary me-2">
-                  Login
-                </button>
-                <div className="vr h-100"></div>
-                <Link className="btn btn-outline-dark ms-2" to="/register">
-                  Register
-                </Link>
+                {validated && errors.password && (
+                  <div className="invalid-feedback">{errors.password}</div>
+                )}
               </div>
             </div>
-          </form>
-        </div>
+            <div className="text-center p-4">
+              <button type="submit" className="btn btn-primary w-100">
+                Login
+              </button>
+            </div>
+            <div className="d-flex justify-content-center text-center mb-3">
+              <Link className="btn btn-link d-inline" to="/register">
+                Register new user
+              </Link>
+              <Link className="btn btn-link d-inline" to="/forget-password">
+                Forget password?
+              </Link>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
+  </div>
+  
   );
 };
 

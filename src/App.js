@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import { ToastContainer } from 'react-toastify';
 import Appheader from './components/Appheader';
+import ResetPasswordPage from './components/ResetPassword';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path='/' element={<Home/>}></Route>
         <Route path='/login' element={<Login/>}></Route>
         <Route path='/register' element={<Register/>}></Route>
+        <Route path='/forget-password' element={<ResetPasswordPage/>}></Route>
       </Routes>
       
       </BrowserRouter>
