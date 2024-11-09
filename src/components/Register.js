@@ -73,8 +73,8 @@ const Register = () => {
         e.preventDefault();
         setValidated(true);
 
-        console.log(formData);
-        console.log(errors);
+        // console.log(formData);
+        // console.log(errors);
 
         if (validateForm()) {
             const regobj = { ...formData };
@@ -290,7 +290,7 @@ const Register = () => {
                             </div>
 
                             <div className="p-4 text-center">
-                                <button type="submit" className="btn btn-primary w-100">
+                                <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                                     {loading ? <div className="spinner-border" role="status">
                                         <span className="visually-hidden">Loading...</span>
                                     </div> : "Register"}

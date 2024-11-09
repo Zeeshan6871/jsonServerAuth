@@ -1,3 +1,5 @@
+const baseurl = process.env.REACT_APP_BASE_URL;
+
 export const registerUser = async ({ id,
   name,
   password,
@@ -7,7 +9,7 @@ export const registerUser = async ({ id,
   address,
   gender}) => {
     try {
-        const response = await fetch("https://jsonserverauth.onrender.com/user", {
+        const response = await fetch(`${baseurl}/user`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({id,
@@ -33,7 +35,7 @@ export const registerUser = async ({ id,
 
 export const loginUser = async (username, password) => {
     try {
-      const response = await fetch(`https://jsonserverauth.onrender.com/user/${username}`);
+      const response = await fetch(`${baseurl}/user/${username}`);
   
       if (!response.ok) {
         throw new Error("User not found or invalid response");
@@ -56,27 +58,32 @@ export const loginUser = async (username, password) => {
     }
   };
   
-  export const validateUsername = (formData) => {
+  export const validateUsername = async (formData) => {
     const { username } = formData;
-    return new Promise((resolve, reject) => {
-      fetch(`https://jsonserverauth.onrender.com/user?id=${username}`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.length > 0) {
-            resolve({ message: "Username found, please enter a new password." });
-          } else {
-            reject(new Error("Username not found."));
-          }
-        })
-        .catch((error) => {
-          reject(new Error("Error checking username: " + error.message));
-        });
-    });
+    try {
+      const response = await fetch(`${baseurl}/user?id=${username}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to validate username');
+      }
+  
+      const data = await response.json();
+  
+      if (data.length > 0) {
+        return { message: "Username found, please enter a new password." };
+      } else {
+        throw new Error("Username not found.");
+      }
+  
+    } catch (error) {
+      throw new Error("Error checking username: " + error.message);
+    }
   };
+  
 
   export const resetUserPassword = async (username, newPassword) => {
     try {
-      const response = await fetch(`https://jsonserverauth.onrender.com/user/${username}`, {
+      const response = await fetch(`${baseurl}/user/${username}`, {
         method: 'PATCH',  // Update the existing user
         headers: {
           'Content-Type': 'application/json',
